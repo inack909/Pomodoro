@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POMODORO — BY BADDA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'pomodoro/css/style.css' %}">
+</head>
+<body class="mode-focus">
+  <div class="bg-layer bg-desk" aria-hidden="true"></div>
+  <div class="bg-layer bg-park" aria-hidden="true"></div>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <div class="app">
+    <header class="header">
+      <div class="logo">
+        <h1 class="logo-title">POMODORO</h1>
+        <p class="logo-byline">BY BADDA</p>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="timer-section pixel-panel">
+        <div class="scene-art" aria-hidden="true">
+          <img src="{% static 'pomodoro/img/bg-park.png' %}" alt="" class="scene-img scene-focus">
+          <img src="{% static 'pomodoro/img/bg-desk.png' %}" alt="" class="scene-img scene-break">
+        </div>
+
+        <div class="task-input-wrap">
+          <input
+            type="text"
+            id="task-input"
+            class="task-input pixel-input"
+            placeholder="what are you studying?"
+            maxlength="200"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="duration-picker" id="duration-picker">
+          <p class="section-label">session length</p>
+          <div class="duration-buttons">
+            <button class="duration-btn active" data-minutes="25">25 min</button>
+            <button class="duration-btn" data-minutes="60">60 min</button>
+            <button class="duration-btn" data-minutes="120">120 min</button>
+            <button class="duration-btn duration-add" id="btn-add-time">+10 min</button>
+          </div>
+          <p class="duration-total" id="duration-total">total: 25 min</p>
+        </div>
+
+        <div class="warning-inline pixel-panel is-hidden" id="warning-inline">
+          <img
+            src="{% static 'pomodoro/img/warning.png' %}"
+            alt="Warning"
+            class="warning-img"
+          >
+          <p class="warning-text">bro… 120 min wasn't enough??</p>
+          <button class="btn btn-primary pixel-btn warning-btn" id="btn-warning-ok">ok i get it</button>
+        </div>
+
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 260 260">
+            <circle class="ring-bg" cx="130" cy="130" r="120" />
+            <circle class="ring-progress" cx="130" cy="130" r="120" id="ring-progress" />
+          </svg>
+          <div class="timer-display">
+            <span class="timer-time" id="timer-display">25:00</span>
+            <span class="timer-label" id="timer-label">focus session</span>
+          </div>
+        </div>
+
+        <div class="controls" id="controls-normal">
+          <button class="btn btn-primary pixel-btn" id="btn-start">▶ start</button>
+          <button class="btn btn-secondary pixel-btn" id="btn-pause" hidden>❚❚ pause</button>
+          <button class="btn btn-ghost pixel-btn" id="btn-reset">↺ reset</button>
+        </div>
+
+        <div class="start-prompt is-hidden" id="start-prompt">
+          <p class="start-prompt-label">break over — type to continue</p>
+          <input
+            type="text"
+            id="start-input"
+            class="start-input pixel-input"
+            placeholder='type "start"'
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <p class="start-hint" id="start-hint"></p>
+        </div>
+
+        <p class="session-status" id="session-status">pick a length & hit start</p>
+      </section>
+
+      <aside class="sidebar">
+        <div class="stats-card pixel-panel">
+          <h2>today's progress</h2>
+          <div class="stats-grid">
+            <div class="stat">
+              <span class="stat-value" id="stat-today-time">0m</span>
+              <span class="stat-label">study time</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-today-pomodoros">0</span>
+              <span class="stat-label">sessions</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-week-time">0m</span>
+              <span class="stat-label">this week</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-total-time">0m</span>
+              <span class="stat-label">all time</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card pixel-panel">
+          <h2>how it works</h2>
+          <ul class="info-list">
+            <li>pick 25, 60, or 120 min</li>
+            <li>stack +10 min if you need more</li>
+            <li>auto break when done (5 or 10 min)</li>
+            <li>type <strong>start</strong> after break</li>
+          </ul>
+        </div>
+
+        <div class="history-card pixel-panel">
+          <h2>recent sessions</h2>
+          <ul class="history-list" id="history-list">
+            <li class="history-empty">no sessions yet ♡</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="{% static 'pomodoro/js/app.js' %}"></script>
+</body>
+</html>
