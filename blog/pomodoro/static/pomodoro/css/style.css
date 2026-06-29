@@ -279,6 +279,11 @@ body.mode-break .scene-break {
   color: var(--dark-brown);
 }
 
+.duration-sub {
+  background: var(--peach);
+  color: var(--dark-brown);
+}
+
 .duration-total {
   margin-top: 10px;
   font-size: 1.1rem;
@@ -431,12 +436,14 @@ body.mode-break .scene-break {
 
 .stats-card,
 .todo-card,
+.calendar-card,
 .history-card {
   padding: 16px;
 }
 
 .stats-card h2,
 .todo-card h2,
+.calendar-card h2,
 .history-card h2 {
   font-family: var(--font-pixel);
   font-size: 0.45rem;
@@ -502,6 +509,164 @@ body.mode-break .scene-break {
 
 .active-task-label span {
   font-weight: bold;
+}
+
+.todo-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.todo-card-header h2 {
+  margin-bottom: 0;
+}
+
+.completed-toggle {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border: 2px solid var(--panel-border);
+  background: #fff8ee;
+  color: var(--warm-brown);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.completed-toggle.active {
+  background: var(--break-green);
+  border-color: var(--grass-deep);
+  color: var(--dark-brown);
+}
+
+.completed-list {
+  margin-top: 8px;
+  border-top: 2px dashed var(--panel-border);
+  padding-top: 8px;
+}
+
+.disappointed-inline {
+  width: 100%;
+  max-width: 380px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  animation: shake 0.5s ease;
+}
+
+.disappointed-text {
+  font-family: var(--font-pixel);
+  font-size: 0.45rem;
+  color: var(--sakura-deep);
+  line-height: 1.9;
+  text-align: center;
+}
+
+.calendar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.calendar-header h2 {
+  margin-bottom: 0;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cal-month-label {
+  font-size: 1.1rem;
+  color: var(--dark-brown);
+  flex: 1;
+  text-align: center;
+}
+
+.cal-nav-btn {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  padding: 4px 12px;
+  border: 2px solid var(--panel-border);
+  background: #fff8ee;
+  cursor: pointer;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 0.35rem;
+  color: var(--warm-brown);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day {
+  min-height: 52px;
+  padding: 4px;
+  border: 2px solid var(--panel-border);
+  background: #fff8ee;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.cal-day.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.cal-day.today {
+  border-color: var(--sakura-deep);
+  box-shadow: 2px 2px 0 var(--sakura);
+}
+
+.cal-day.selected {
+  background: #fff0f4;
+  border-color: var(--sakura-deep);
+}
+
+.cal-day.has-study {
+  background: #eef8ee;
+}
+
+.cal-day-num {
+  font-size: 0.95rem;
+  color: var(--dark-brown);
+}
+
+.cal-day-time {
+  font-family: var(--font-pixel);
+  font-size: 0.32rem;
+  color: var(--grass-deep);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.calendar-selected {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: var(--warm-brown);
+  text-align: center;
 }
 
 .todo-form {
