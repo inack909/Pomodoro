@@ -38,6 +38,8 @@
             <button class="duration-btn active" data-minutes="25">25 min</button>
             <button class="duration-btn" data-minutes="60">60 min</button>
             <button class="duration-btn" data-minutes="120">120 min</button>
+            <button class="duration-btn duration-adjust duration-sub" id="btn-sub-5">-5 min</button>
+            <button class="duration-btn duration-adjust duration-sub" id="btn-sub-1">-1 min</button>
             <button class="duration-btn duration-add" id="btn-add-time">+10 min</button>
           </div>
           <p class="duration-total" id="duration-total">total: 25 min</p>
@@ -51,6 +53,16 @@
           >
           <p class="warning-text">bro… 120 min wasn't enough??</p>
           <button class="btn btn-primary pixel-btn warning-btn" id="btn-warning-ok">ok i get it</button>
+        </div>
+
+        <div class="disappointed-inline pixel-panel is-hidden" id="disappointed-inline">
+          <img
+            src="{% static 'pomodoro/img/disappointed.png' %}"
+            alt="Disappointed"
+            class="warning-img"
+          >
+          <p class="disappointed-text" id="disappointed-text"></p>
+          <button class="btn btn-primary pixel-btn warning-btn" id="btn-disappointed-ok">i'll try harder</button>
         </div>
 
         <div class="timer-ring-wrap">
@@ -111,7 +123,12 @@
         </div>
 
         <div class="todo-card pixel-panel">
-          <h2>to-do list</h2>
+          <div class="todo-card-header">
+            <h2>to-do list</h2>
+            <button type="button" class="completed-toggle" id="btn-completed-tasks">
+              completed tasks (<span id="completed-count">0</span>)
+            </button>
+          </div>
           <form class="todo-form" id="todo-form">
             <input
               type="text"
@@ -126,6 +143,23 @@
           <ul class="todo-list" id="todo-list">
             <li class="todo-empty">no tasks yet — add one above</li>
           </ul>
+          <ul class="todo-list completed-list is-hidden" id="completed-todo-list"></ul>
+        </div>
+
+        <div class="calendar-card pixel-panel">
+          <div class="calendar-header">
+            <h2>study calendar</h2>
+            <div class="calendar-nav">
+              <button type="button" class="cal-nav-btn" id="cal-prev" aria-label="previous month">◀</button>
+              <span class="cal-month-label" id="cal-month-label"></span>
+              <button type="button" class="cal-nav-btn" id="cal-next" aria-label="next month">▶</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays">
+            <span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+          <p class="calendar-selected" id="calendar-selected">pick a day to see details</p>
         </div>
 
         <div class="history-card pixel-panel">
