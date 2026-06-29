@@ -33,12 +33,11 @@ def stats(request):
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
 
-    focus_qs = StudySession.objects.filter(
-        session_type=StudySession.SESSION_FOCUS, completed=True
-    )
+    focus_qs = StudySession.objects.filter(session_type=StudySession.SESSION_FOCUS)
 
+    today_focus = focus_qs.filter(started_at__gte=today_start)
     today_seconds = (
-        focus_qs.filter(started_at__gte=today_start).aggregate(
+        today_focus.aggregate(
             total=Sum("duration_seconds")
         )["total"]
         or 0
@@ -50,7 +49,7 @@ def stats(request):
         or 0
     )
     total_seconds = focus_qs.aggregate(total=Sum("duration_seconds"))["total"] or 0
-    today_pomodoros = focus_qs.filter(started_at__gte=today_start).count()
+    today_pomodoros = today_focus.count()
 
     return JsonResponse(
         {
