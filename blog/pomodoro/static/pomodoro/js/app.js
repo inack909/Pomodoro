@@ -31,6 +31,10 @@
     sessions: [],
     activeTodoId: null,
     historyTab: "recent",
+    showCompletedTodos: false,
+    calendarYear: new Date().getFullYear(),
+    calendarMonth: new Date().getMonth(),
+    selectedCalendarDay: null,
   };
 
   const els = {
@@ -43,6 +47,8 @@
     btnStop: document.getElementById("btn-stop"),
     btnReset: document.getElementById("btn-reset"),
     btnAddTime: document.getElementById("btn-add-time"),
+    btnSub1: document.getElementById("btn-sub-1"),
+    btnSub5: document.getElementById("btn-sub-5"),
     durationPicker: document.getElementById("duration-picker"),
     durationBtns: document.querySelectorAll(".duration-btn[data-minutes]"),
     durationTotal: document.getElementById("duration-total"),
@@ -55,6 +61,9 @@
     activeTaskName: document.getElementById("active-task-name"),
     warningInline: document.getElementById("warning-inline"),
     btnWarningOk: document.getElementById("btn-warning-ok"),
+    disappointedInline: document.getElementById("disappointed-inline"),
+    disappointedText: document.getElementById("disappointed-text"),
+    btnDisappointedOk: document.getElementById("btn-disappointed-ok"),
     statTodayTime: document.getElementById("stat-today-time"),
     statTodayPomodoros: document.getElementById("stat-today-pomodoros"),
     statWeekTime: document.getElementById("stat-week-time"),
@@ -65,6 +74,14 @@
     todoForm: document.getElementById("todo-form"),
     todoInput: document.getElementById("todo-input"),
     todoList: document.getElementById("todo-list"),
+    completedTodoList: document.getElementById("completed-todo-list"),
+    btnCompletedTasks: document.getElementById("btn-completed-tasks"),
+    completedCount: document.getElementById("completed-count"),
+    calendarGrid: document.getElementById("calendar-grid"),
+    calMonthLabel: document.getElementById("cal-month-label"),
+    calPrev: document.getElementById("cal-prev"),
+    calNext: document.getElementById("cal-next"),
+    calendarSelected: document.getElementById("calendar-selected"),
   };
 
   function uid() {
@@ -168,6 +185,11 @@
     const todo = state.todos.find((t) => t.id === id);
     if (todo) {
       todo.done = !todo.done;
+      if (todo.done && state.activeTodoId === id) {
+        state.activeTodoId = state.todos.find((t) => !t.done)?.id || null;
+        saveActiveTodo();
+        updateActiveTaskDisplay();
+      }
       saveTodos();
       renderTodos();
     }
@@ -201,28 +223,201 @@
     }
   }
 
+  function renderTodoItem(todo) {
+    const selected = todo.id === state.activeTodoId;
+    const timeLabel =
+      todo.studySeconds > 0 ? `${formatDuration(todo.studySeconds)} studied` : "not started";
+    return `
+      <li class="todo-item${selected ? " selected" : ""}${todo.done ? " done" : ""}" data-id="${todo.id}">
+        <button type="button" class="todo-check" data-action="toggle" aria-label="mark done">${todo.done ? "✓" : ""}</button>
+        <button type="button" class="todo-body" data-action="select">
+          <span class="todo-title">${escapeHtml(todo.title)}</span>
+          <span class="todo-time">${timeLabel}</span>
+        </button>
+        <button type="button" class="todo-delete" data-action="delete" aria-label="delete">×</button>
+      </li>`;
+  }
+
   function renderTodos() {
-    if (!state.todos.length) {
+    const activeTodos = state.todos.filter((t) => !t.done);
+    const completedTodos = state.todos.filter((t) => t.done);
+
+    els.completedCount.textContent = completedTodos.length;
+
+    if (!activeTodos.length) {
       els.todoList.innerHTML = '<li class="todo-empty">no tasks yet — add one above</li>';
+    } else {
+      els.todoList.innerHTML = activeTodos.map(renderTodoItem).join("");
+    }
+
+    if (state.showCompletedTodos) {
+      els.completedTodoList.classList.remove("is-hidden");
+      if (!completedTodos.length) {
+        els.completedTodoList.innerHTML = '<li class="todo-empty">no completed tasks yet</li>';
+      } else {
+        els.completedTodoList.innerHTML = completedTodos.map(renderTodoItem).join("");
+      }
+    } else {
+      els.completedTodoList.classList.add("is-hidden");
+    }
+  }
+
+  function toggleCompletedTasks() {
+    state.showCompletedTodos = !state.showCompletedTodos;
+    els.btnCompletedTasks.classList.toggle("active", state.showCompletedTodos);
+    renderTodos();
+  }
+
+  function dateKey(year, month, day) {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  function getDailyStudyMap() {
+    const map = {};
+    state.sessions
+      .filter((s) => s.session_type === "focus")
+      .forEach((s) => {
+        const d = new Date(s.started_at);
+        const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+        map[key] = (map[key] || 0) + s.duration_seconds;
+      });
+    return map;
+  }
+
+  function renderCalendar() {
+    const year = state.calendarYear;
+    const month = state.calendarMonth;
+    const monthNames = [
+      "january", "february", "march", "april", "may", "june",
+      "july", "august", "september", "october", "november", "december",
+    ];
+
+    els.calMonthLabel.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dailyMap = getDailyStudyMap();
+    const today = new Date();
+    const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+    let html = "";
+
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div class="cal-day empty"></div>';
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const key = dateKey(year, month, day);
+      const seconds = dailyMap[key] || 0;
+      const isToday = key === todayKey;
+      const isSelected = state.selectedCalendarDay === key;
+      const classes = [
+        "cal-day",
+        seconds > 0 ? "has-study" : "",
+        isToday ? "today" : "",
+        isSelected ? "selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      const timeLabel = seconds > 0 ? formatDuration(seconds) : "";
+
+      html += `
+        <button type="button" class="${classes}" data-day="${day}" data-key="${key}">
+          <span class="cal-day-num">${day}</span>
+          ${timeLabel ? `<span class="cal-day-time">${timeLabel}</span>` : ""}
+        </button>`;
+    }
+
+    els.calendarGrid.innerHTML = html;
+    updateCalendarSelectedLabel();
+  }
+
+  function updateCalendarSelectedLabel() {
+    if (!state.selectedCalendarDay) {
+      els.calendarSelected.textContent = "pick a day to see details";
       return;
     }
 
-    els.todoList.innerHTML = state.todos
-      .map((todo) => {
-        const selected = todo.id === state.activeTodoId;
-        const timeLabel =
-          todo.studySeconds > 0 ? `${formatDuration(todo.studySeconds)} studied` : "not started";
-        return `
-          <li class="todo-item${selected ? " selected" : ""}${todo.done ? " done" : ""}" data-id="${todo.id}">
-            <button type="button" class="todo-check" data-action="toggle" aria-label="mark done">${todo.done ? "✓" : ""}</button>
-            <button type="button" class="todo-body" data-action="select">
-              <span class="todo-title">${escapeHtml(todo.title)}</span>
-              <span class="todo-time">${timeLabel}</span>
-            </button>
-            <button type="button" class="todo-delete" data-action="delete" aria-label="delete">×</button>
-          </li>`;
-      })
-      .join("");
+    const dailyMap = getDailyStudyMap();
+    const seconds = dailyMap[state.selectedCalendarDay] || 0;
+    const [y, m, d] = state.selectedCalendarDay.split("-").map(Number);
+    const label = new Date(y, m - 1, d).toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+
+    if (seconds > 0) {
+      const sessionsOnDay = state.sessions.filter((s) => {
+        if (s.session_type !== "focus") return false;
+        const sd = new Date(s.started_at);
+        return dateKey(sd.getFullYear(), sd.getMonth(), sd.getDate()) === state.selectedCalendarDay;
+      });
+      els.calendarSelected.textContent = `${label}: ${formatDuration(seconds)} · ${sessionsOnDay.length} session(s)`;
+    } else {
+      els.calendarSelected.textContent = `${label}: no study logged`;
+    }
+  }
+
+  function shiftCalendarMonth(delta) {
+    state.calendarMonth += delta;
+    if (state.calendarMonth > 11) {
+      state.calendarMonth = 0;
+      state.calendarYear += 1;
+    } else if (state.calendarMonth < 0) {
+      state.calendarMonth = 11;
+      state.calendarYear -= 1;
+    }
+    renderCalendar();
+  }
+
+  function showDisappointed(secondsLeft) {
+    els.disappointedText.textContent = `you still had ${formatTime(secondsLeft)}, don't disappoint me next time`;
+    els.disappointedInline.classList.remove("is-hidden");
+    els.disappointedInline.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function hideDisappointed() {
+    els.disappointedInline.classList.add("is-hidden");
+  }
+
+  function shouldShowDisappointed() {
+    return state.phase === PHASE.FOCUS && state.sessionStart && state.secondsLeft > 0;
+  }
+
+  function applyTotalMinutes(total) {
+    const presets = [25, 60, 120];
+    const match = presets.find((p) => p === total);
+    if (match) {
+      setFocusDuration(match, 0);
+      return;
+    }
+    if (total > MAX_MINUTES) {
+      setFocusDuration(120, total - 120);
+      return;
+    }
+    const base = presets.filter((p) => p <= total).pop() || 25;
+    state.baseMinutes = base;
+    state.extraMinutes = total - base;
+    state.focusMinutes = total;
+    state.breakMinutes = getBreakMinutes(total);
+    els.durationBtns.forEach((btn) => {
+      btn.classList.toggle("active", parseInt(btn.dataset.minutes, 10) === base && state.extraMinutes === 0);
+    });
+    updateDurationDisplay();
+    if (state.phase === PHASE.IDLE || state.phase === PHASE.AWAITING_START) {
+      applyFocusTimer();
+    }
+    if (state.focusMinutes > MAX_MINUTES && !state.warningShown) {
+      showWarning();
+    }
+  }
+
+  function adjustTotalMinutes(delta) {
+    if (state.phase === PHASE.FOCUS || state.phase === PHASE.BREAK) return;
+    const total = Math.max(1, getTotalFocusMinutes() + delta);
+    applyTotalMinutes(total);
   }
 
   function addLocalSession(session) {
@@ -235,6 +430,7 @@
     renderHistory();
     renderTaskSummary();
     updateStatsFromSessions();
+    renderCalendar();
   }
 
   function computeStats() {
@@ -530,11 +726,14 @@
   }
 
   async function stopFocusSession() {
+    const showSad = shouldShowDisappointed();
+    const timeLeft = state.secondsLeft;
     const elapsed = getElapsedFocusSeconds();
     stopInterval();
     if (elapsed > 0) {
       await logSession("focus", elapsed, false);
     }
+    if (showSad) showDisappointed(timeLeft);
     state.sessionStart = null;
     applyFocusTimer();
     setPhase(PHASE.IDLE);
@@ -542,7 +741,12 @@
   }
 
   async function resetAll() {
+    let showSad = false;
+    let timeLeft = 0;
+
     if (state.phase === PHASE.FOCUS) {
+      showSad = shouldShowDisappointed();
+      timeLeft = state.secondsLeft;
       const elapsed = getElapsedFocusSeconds();
       stopInterval();
       if (elapsed > 0) {
@@ -558,6 +762,7 @@
     hideWarning();
     setFocusDuration(25, 0);
     setPhase(PHASE.IDLE);
+    if (showSad) showDisappointed(timeLeft);
     document.title = "POMODORO — BY BADDA";
   }
 
@@ -616,19 +821,7 @@
   }
 
   function addTenMinutes() {
-    if (state.phase === PHASE.FOCUS || state.phase === PHASE.BREAK) return;
-    state.extraMinutes += 10;
-    state.focusMinutes = getTotalFocusMinutes();
-    state.breakMinutes = getBreakMinutes(state.focusMinutes);
-    updateDurationDisplay();
-
-    if (state.phase === PHASE.IDLE || state.phase === PHASE.AWAITING_START) {
-      applyFocusTimer();
-    }
-
-    if (state.focusMinutes > MAX_MINUTES && !state.warningShown) {
-      showWarning();
-    }
+    adjustTotalMinutes(10);
   }
 
   function handleStartInput() {
@@ -683,6 +876,7 @@
       renderHistory();
       renderTaskSummary();
       updateStatsFromSessions();
+      renderCalendar();
     } catch {
       /* use local data only */
     }
@@ -724,6 +918,8 @@
   els.btnStop.addEventListener("click", stopFocusSession);
   els.btnReset.addEventListener("click", resetAll);
   els.btnAddTime.addEventListener("click", addTenMinutes);
+  els.btnSub1.addEventListener("click", () => adjustTotalMinutes(-1));
+  els.btnSub5.addEventListener("click", () => adjustTotalMinutes(-5));
 
   els.durationBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -738,13 +934,29 @@
   });
 
   els.btnWarningOk.addEventListener("click", hideWarning);
+  els.btnDisappointedOk.addEventListener("click", hideDisappointed);
+
+  els.btnCompletedTasks.addEventListener("click", toggleCompletedTasks);
+
+  els.calPrev.addEventListener("click", () => shiftCalendarMonth(-1));
+  els.calNext.addEventListener("click", () => shiftCalendarMonth(1));
+
+  els.calendarGrid.addEventListener("click", (e) => {
+    const dayBtn = e.target.closest(".cal-day[data-key]");
+    if (!dayBtn) return;
+    state.selectedCalendarDay = dayBtn.dataset.key;
+    renderCalendar();
+  });
 
   els.todoForm.addEventListener("submit", (e) => {
     e.preventDefault();
     addTodo(els.todoInput.value);
   });
 
-  els.todoList.addEventListener("click", (e) => {
+  els.todoList.addEventListener("click", handleTodoClick);
+  els.completedTodoList.addEventListener("click", handleTodoClick);
+
+  function handleTodoClick(e) {
     const item = e.target.closest(".todo-item");
     if (!item) return;
     const id = item.dataset.id;
@@ -753,7 +965,7 @@
     if (action === "toggle") toggleTodo(id);
     else if (action === "delete") deleteTodo(id);
     else if (action === "select") selectTodo(id);
-  });
+  }
 
   els.historyTabs.forEach((tab) => {
     tab.addEventListener("click", () => switchHistoryTab(tab.dataset.tab));
@@ -772,6 +984,7 @@
   renderTodos();
   renderHistory();
   renderTaskSummary();
+  renderCalendar();
   updateStatsFromSessions();
   updateActiveTaskDisplay();
   mergeApiSessions();
